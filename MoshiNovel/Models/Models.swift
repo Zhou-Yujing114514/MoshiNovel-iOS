@@ -51,15 +51,29 @@ struct SearchResult: Codable, Identifiable {
 }
 
 // MARK: - 下载任务
+// MARK: - 任务进度
+struct TaskProgress: Codable {
+    let chapterTotal: Int?
+    let savedChapters: Int?
+    let phase: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case chapterTotal = "chapter_total"
+        case savedChapters = "saved_chapters"
+        case phase
+    }
+}
+
+// MARK: - 下载任务
 struct DownloadTask: Codable, Identifiable {
     let id: Int
     let bookId: String?
-    let bookTitle: String?
+    let title: String?
+    let author: String?
     let format: String?
     let state: TaskStatus?
-    let progress: Int?
-    let totalChapters: Int?
-    let downloadedChapters: Int?
+    let progress: TaskProgress?
+    let position: Int?
     let downloadUrl: String?
     let error: String?
     let createdAt: TimeInterval?
@@ -69,10 +83,7 @@ struct DownloadTask: Codable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case id
         case bookId = "book_id"
-        case bookTitle = "book_title"
-        case format, state, progress
-        case totalChapters = "total_chapters"
-        case downloadedChapters = "downloaded_chapters"
+        case title, author, format, state, progress, position
         case downloadUrl = "download_url"
         case error
         case createdAt = "created_at"

@@ -100,12 +100,17 @@ struct DownloadView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
-                        Text(task.bookTitle ?? "未知书籍")
+                        Text(task.title ?? "未知书籍")
                             .font(.vt(size: 14))
                             .fontWeight(.semibold)
                             .foregroundColor(appState.textColor)
                             .lineLimit(1)
                         Text(task.bookId ?? "")
+                            .font(.vt(size: 11))
+                            .foregroundColor(appState.mutedColor)
+                    }
+                    if let author = task.author, !author.isEmpty {
+                        Text(author)
                             .font(.vt(size: 11))
                             .foregroundColor(appState.mutedColor)
                     }
@@ -118,16 +123,25 @@ struct DownloadView: View {
             }
             
             // 进度条
-            if task.state == .running {
+            if task.state == .running, let progress = task.progress {
                 VStack(alignment: .leading, spacing: 4) {
-                    ProgressView(value: Double(task.progress ?? 0), total: 100)
+                    let total = progress.chapterTotal ?? 0
+                    let done = progress.savedChapters ?? 0
+                    let pct = total > 0 ? Double(done) / Double(total) : 0
+                    ProgressView(value: pct)
                         .tint(.vtAccent)
-                    if let total = task.totalChapters, let downloaded = task.downloadedChapters {
-                        Text("\(downloaded)/\(total) 章")
-                            .font(.vt(size: 11))
-                            .foregroundColor(appState.mutedColor)
-                    }
+                    let label = progress.phase == "audiobook" ? "生成音频中 \(done)/\(total)" : "已下载 \(done)/\(total) 章"
+                    Text(label)
+                        .font(.vt(size: 11))
+                        .foregroundColor(appState.mutedColor)
                 }
+            }
+            
+            // 排队位置
+            if task.state == .queued, let position = task.position, position > 0 {
+                Text("排队中 · 第 \(position) 位")
+                    .font(.vt(size: 11))
+                    .foregroundColor(appState.mutedColor)
             }
             
             // 错误信息

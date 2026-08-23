@@ -203,3 +203,22 @@ struct UserListResponse: Codable {
     let items: [User]?
     let error: String?
 }
+
+// MARK: - 在线阅读
+struct BookMeta: Codable {
+    let title: String?
+    let downloading: Bool?
+    let chapterCount: Int?
+    let total: Int?
+    
+    enum CodingKeys: String, CodingKey {
+        case title, downloading, total
+        case chapterCount = "chapter_count"
+    }
+}
+
+struct Chapter: Codable, Identifiable {
+    let id: String
+    let title: String
+    let href: String?
+}

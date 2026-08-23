@@ -67,6 +67,32 @@ class APIService {
         }
     }
     
+    // 获取纯文本/HTML 响应
+    func requestString(_ path: String, method: String = "GET") async throws -> String {
+        guard let url = URL(string: baseURL + path) else {
+            throw APIError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = method
+        
+        let (data, response) = try await session.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+        
+        if httpResponse.statusCode == 401 {
+            throw APIError.unauthorized
+        }
+        
+        guard let text = String(data: data, encoding: .utf8) else {
+            throw APIError.decodeError(NSError(domain: "APIService", code: -1, userInfo: [NSLocalizedDescriptionKey: "无法解码文本"]))
+        }
+        
+        return text
+    }
+    
     // MARK: - 站点信息
     func fetchSiteConfig() async throws -> SiteConfig {
         return try await request("/api/site")
@@ -104,6 +130,19 @@ class APIService {
     
     func submitTask(bookId: String, format: String) async throws -> SubmitResponse {
         return try await request("/api/tasks", method: "POST", body: ["book_id": bookId, "format": format])
+    }
+    
+    // MARK: - 在线阅读
+    func fetchBookMeta(taskId: Int) async throws -> BookMeta {
+        return try await request("/api/book/\(taskId)/meta")
+    }
+    
+    func fetchChapters(taskId: Int) async throws -> [Chapter] {
+        return try await request("/api/book/\(taskId)/chapters")
+    }
+    
+    func fetchChapterContent(taskId: Int, index: Int) async throws -> String {
+        return try await requestString("/api/book/\(taskId)/chapter/\(index)")
     }
     
     // MARK: - 管理

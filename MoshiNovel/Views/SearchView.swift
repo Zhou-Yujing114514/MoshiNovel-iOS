@@ -8,6 +8,9 @@ struct SearchView: View {
     @State private var searchError: String = ""
     @State private var isSearching = false
     @State private var selectedBook: SearchResult?
+    @State private var showReader = false
+    @State private var readerTaskId = 0
+    @State private var isCreatingPreview = false
     @State private var searchTask: Task<Void, Never>?
     
     var body: some View {
@@ -37,6 +40,10 @@ struct SearchView: View {
                 selectedBook = nil
             }
             .environmentObject(appState)
+        }
+        .sheet(isPresented: $showReader) {
+            ReaderView(taskId: readerTaskId)
+                .environmentObject(appState)
         }
     }
     
@@ -232,21 +239,46 @@ struct SearchView: View {
                     .foregroundColor(appState.mutedColor.opacity(0.7))
             }
             Spacer()
-            Button(action: {
-                guard appState.isLoggedIn else {
-                    showLogin = true
-                    return
+            HStack(spacing: 6) {
+                Button(action: {
+                    guard appState.isLoggedIn else {
+                        showLogin = true
+                        return
+                    }
+                    selectedBook = book
+                }) {
+                    Text("下载")
+                        .font(.vt(size: 12))
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 6)
+                        .background(Color.vtAccent)
+                        .cornerRadius(6)
                 }
-                selectedBook = book
-            }) {
-                Text("下载")
-                    .font(.vt(size: 12))
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 6)
-                    .background(Color.vtAccent)
-                    .cornerRadius(6)
+                
+                Button(action: {
+                    guard appState.isLoggedIn else {
+                        showLogin = true
+                        return
+                    }
+                    Task { await startPreview(book: book) }
+                }) {
+                    if isCreatingPreview {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                    } else {
+                        Text("预览")
+                            .font(.vt(size: 12))
+                            .fontWeight(.semibold)
+                            .foregroundColor(.vtGreen)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 6)
+                            .background(Color.vtGreen.opacity(0.14))
+                            .cornerRadius(6)
+                    }
+                }
+                .disabled(isCreatingPreview)
             }
         }
         .padding(12)
@@ -277,6 +309,22 @@ struct SearchView: View {
                 self.searchError = error.localizedDescription
                 self.searchResults = []
             }
+        }
+    }
+    
+    private func startPreview(book: SearchResult) async {
+        isCreatingPreview = true
+        defer { isCreatingPreview = false }
+        
+        do {
+            let response = try await APIService.shared.submitTask(bookId: book.id, format: "epub")
+            if let taskId = response.id {
+                readerTaskId = taskId
+                showReader = true
+            }
+        } catch {
+            print("创建预览任务失败: \(error)")
+            searchError = "创建预览失败: \(error.localizedDescription)"
         }
     }
 }

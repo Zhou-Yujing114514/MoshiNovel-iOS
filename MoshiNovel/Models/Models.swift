@@ -121,6 +121,62 @@ struct BasicResponse: Codable {
     let error: String?
 }
 
+// MARK: - 管理员信息
+struct AdminInfo: Codable {
+    let queued: Int?
+    let running: Int?
+    let tasks: Int?
+    let users: Int?
+    let siteTitle: String?
+    let siteOwner: String?
+    let maxQueueLen: Int?
+    let rateLimitPerIp: Int?
+    let rateLimitWindowMin: Int?
+    let downloadTtlHours: Int?
+    let tomatoAddr: String?
+    let dataDir: String?
+    let appAddr: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case queued, running, tasks, users
+        case siteTitle = "site_title"
+        case siteOwner = "site_owner"
+        case maxQueueLen = "max_queue_len"
+        case rateLimitPerIp = "rate_limit_per_ip"
+        case rateLimitWindowMin = "rate_limit_window_min"
+        case downloadTtlHours = "download_ttl_hours"
+        case tomatoAddr = "tomato_addr"
+        case dataDir = "data_dir"
+        case appAddr = "app_addr"
+    }
+}
+
+// MARK: - 管理员设置
+struct AdminSettings: Codable {
+    let siteTitle: String?
+    let siteVersion: String?
+    let siteOwner: String?
+    let siteNotice: String?
+    let maxQueueLen: Int?
+    let rateLimitPerIp: Int?
+    let rateLimitWindowMin: Int?
+    let downloadTtlHours: Int?
+    let disabled: Bool?
+    let maintenance: Bool?
+    
+    enum CodingKeys: String, CodingKey {
+        case siteTitle = "site_title"
+        case siteVersion = "site_version"
+        case siteOwner = "site_owner"
+        case siteNotice = "site_notice"
+        case maxQueueLen = "max_queue_len"
+        case rateLimitPerIp = "rate_limit_per_ip"
+        case rateLimitWindowMin = "rate_limit_window_min"
+        case downloadTtlHours = "download_ttl_hours"
+        case disabled, maintenance
+    }
+}
+
 struct TaskListResponse: Codable {
     let items: [DownloadTask]?
     let running: Int?

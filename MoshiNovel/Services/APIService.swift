@@ -114,6 +114,27 @@ class APIService {
     func clearRecords() async throws {
         _ = try await request("/api/admin/clear", method: "POST", body: [:]) as BasicResponse
     }
+    
+    // MARK: - 管理员信息和设置
+    func fetchAdminInfo() async throws -> AdminInfo {
+        return try await request("/api/admin/info")
+    }
+    
+    func fetchAdminSettings() async throws -> AdminSettings {
+        return try await request("/api/admin/settings")
+    }
+    
+    func saveAdminSettings(_ settings: [String: Any]) async throws -> BasicResponse {
+        return try await request("/api/admin/settings", method: "POST", body: settings)
+    }
+    
+    func createUser(username: String, password: String) async throws -> BasicResponse {
+        return try await request("/api/admin/create-user", method: "POST", body: ["username": username, "password": password])
+    }
+    
+    func setUserPassword(username: String, password: String) async throws -> BasicResponse {
+        return try await request("/api/admin/set-password", method: "POST", body: ["username": username, "password": password])
+    }
 }
 
 enum APIError: LocalizedError {

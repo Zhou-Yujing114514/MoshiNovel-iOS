@@ -106,6 +106,21 @@ struct LoginResponse: Codable {
     let token: String?
 }
 
+struct MeResponse: Codable {
+    let user: User?
+}
+
+struct SubmitResponse: Codable {
+    let ok: Bool?
+    let error: String?
+    let id: String?
+}
+
+struct BasicResponse: Codable {
+    let ok: Bool?
+    let error: String?
+}
+
 struct TaskListResponse: Codable {
     let items: [DownloadTask]?
     let running: Int?

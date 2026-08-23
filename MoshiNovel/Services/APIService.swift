@@ -45,7 +45,7 @@ class APIService {
         }
         
         let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        // 注意：不使用 convertFromSnakeCase，所有模型都用自定义 CodingKeys 显式映射
         
         do {
             let result = try decoder.decode(T.self, from: data)
@@ -65,8 +65,8 @@ class APIService {
     
     // MARK: - 用户
     func fetchMe() async throws -> User? {
-        let response: [String: User?] = try await request("/api/me")
-        return response["user"] ?? nil
+        let response: MeResponse = try await request("/api/me")
+        return response.user
     }
     
     func login(username: String, password: String) async throws -> LoginResponse {
@@ -78,7 +78,7 @@ class APIService {
     }
     
     func logout() async {
-        _ = try? await request("/api/logout", method: "POST", body: [:]) as [String: Bool]?
+        _ = try? await request("/api/logout", method: "POST", body: [:]) as BasicResponse
     }
     
     // MARK: - 搜索
@@ -93,7 +93,7 @@ class APIService {
         return try await request("/api/tasks?list=\(list)")
     }
     
-    func submitTask(bookId: String, format: String) async throws -> [String: String] {
+    func submitTask(bookId: String, format: String) async throws -> SubmitResponse {
         return try await request("/api/submit", method: "POST", body: ["book_id": bookId, "format": format])
     }
     
@@ -104,15 +104,15 @@ class APIService {
     }
     
     func setUserTitle(username: String, title: String) async throws {
-        _ = try await request("/api/admin/set-title", method: "POST", body: ["username": username, "title": title]) as [String: Bool]?
+        _ = try await request("/api/admin/set-title", method: "POST", body: ["username": username, "title": title]) as BasicResponse
     }
     
     func deleteUser(username: String) async throws {
-        _ = try await request("/api/admin/delete-user", method: "POST", body: ["username": username]) as [String: Bool]?
+        _ = try await request("/api/admin/delete-user", method: "POST", body: ["username": username]) as BasicResponse
     }
     
     func clearRecords() async throws {
-        _ = try await request("/api/admin/clear", method: "POST", body: [:]) as [String: Bool]?
+        _ = try await request("/api/admin/clear", method: "POST", body: [:]) as BasicResponse
     }
 }
 

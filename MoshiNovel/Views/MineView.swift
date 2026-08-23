@@ -33,7 +33,7 @@ struct MineView: View {
                 .environmentObject(appState)
         }
         .alert("反馈问题", isPresented: $showFeedback) {
-            Button("我确认", role: .default) {
+            Button("我确认") {
                 if let url = URL(string: "https://buer.kdns.fr") {
                     UIApplication.shared.open(url)
                 }

@@ -16,7 +16,7 @@ struct SiteConfig: Codable {
 }
 
 // MARK: - 用户
-struct User: Codable {
+struct User: Codable, Identifiable {
     let id: String
     let username: String
     let isAdmin: Bool?

@@ -89,7 +89,7 @@ class APIService {
         return try await request("/api/tasks?list=\(list)")
     }
     
-    func submitTask(bookId: String, format: String) async throws -> [String: Any] {
+    func submitTask(bookId: String, format: String) async throws -> [String: String] {
         return try await request("/api/submit", method: "POST", body: ["book_id": bookId, "format": format])
     }
     

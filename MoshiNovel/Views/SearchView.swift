@@ -5,6 +5,7 @@ struct SearchView: View {
     @Binding var showLogin: Bool
     @State private var searchText = ""
     @State private var searchResults: [SearchResult] = []
+    @State private var searchError: String = ""
     @State private var isSearching = false
     @State private var selectedBook: SearchResult?
     @State private var showFormatModal = false
@@ -192,6 +193,17 @@ struct SearchView: View {
             if isSearching {
                 ProgressView()
                     .padding()
+            } else if !searchError.isEmpty {
+                VStack(spacing: 8) {
+                    Text("搜索出错")
+                        .font(.vt(size: 14))
+                        .foregroundColor(.vtRed)
+                    Text(searchError)
+                        .font(.vt(size: 12))
+                        .foregroundColor(appState.mutedColor)
+                        .multilineTextAlignment(.center)
+                }
+                .padding()
             } else if searchResults.isEmpty {
                 Text("未找到相关书籍")
                     .font(.vt(size: 14))
@@ -252,6 +264,7 @@ struct SearchView: View {
     
     private func performSearch(_ query: String) async {
         isSearching = true
+        searchError = ""
         defer { isSearching = false }
         
         do {
@@ -261,6 +274,10 @@ struct SearchView: View {
             }
         } catch {
             print("搜索失败: \(error)")
+            await MainActor.run {
+                self.searchError = error.localizedDescription
+                self.searchResults = []
+            }
         }
     }
 }

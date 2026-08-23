@@ -6,21 +6,20 @@ class APIService {
     // 服务器地址 - 摩柿小说下载站
     private let baseURL = "https://morax.kdns.fr"
     
-    // 使用共享 session，自动管理 cookie
-    private let session: URLSession
+    // 使用共享 session
+    private let session = URLSession.shared
     
-    private init() {
-        let config = URLSessionConfiguration.default
-        config.httpCookieAcceptPolicy = .always
-        config.httpShouldSetCookies = true
-        self.session = URLSession(configuration: config)
-    }
+    private init() {}
     
     // MARK: - 通用请求
     private func request<T: Codable>(_ path: String, method: String = "GET", body: [String: Any]? = nil) async throws -> T {
-        guard let url = URL(string: "\(baseURL)\(path)") else {
+        let urlString = "\(baseURL)\(path)"
+        guard let url = URL(string: urlString) else {
+            print("[API] 无效URL: \(urlString)")
             throw APIError.invalidURL
         }
+        
+        print("[API] 请求: \(method) \(urlString)")
         
         var request = URLRequest(url: url)
         request.httpMethod = method
@@ -28,13 +27,18 @@ class APIService {
         
         if let body = body {
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
+            print("[API] 请求体: \(String(data: request.httpBody!, encoding: .utf8) ?? "")")
         }
         
         let (data, response) = try await session.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse else {
+            print("[API] 无效响应")
             throw APIError.invalidResponse
         }
+        
+        print("[API] 响应状态码: \(httpResponse.statusCode)")
+        print("[API] 响应数据: \(String(data: data, encoding: .utf8) ?? "(空)")")
         
         if httpResponse.statusCode == 401 {
             throw APIError.unauthorized
@@ -45,9 +49,11 @@ class APIService {
         
         do {
             let result = try decoder.decode(T.self, from: data)
+            print("[API] 解码成功")
             return result
         } catch {
-            print("[API] 解码失败: \(error), 原始数据: \(String(data: data, encoding: .utf8) ?? "")")
+            print("[API] 解码失败: \(error)")
+            print("[API] 原始数据: \(String(data: data, encoding: .utf8) ?? "")")
             throw APIError.decodeError(error)
         }
     }

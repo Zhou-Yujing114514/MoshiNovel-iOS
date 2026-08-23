@@ -63,6 +63,7 @@ struct HTMLView: UIViewRepresentable {
 // 在线阅读视图
 struct ReaderView: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.presentationMode) private var presentationMode
     let taskId: Int
     @State private var bookMeta: BookMeta?
     @State private var chapters: [Chapter] = []
@@ -81,6 +82,7 @@ struct ReaderView: View {
             VStack(spacing: 0) {
                 // 顶部导航栏
                 topBar
+                    .padding(.top, UIApplication.shared.windows.first?.safeAreaInsets.top ?? 0)
                 
                 // 下载进度提示
                 if let meta = bookMeta, meta.downloading == true {
@@ -120,14 +122,17 @@ struct ReaderView: View {
                     Spacer()
                 } else {
                     HTMLView(html: chapterContent, isDayMode: appState.isDayMode, fontSize: fontSize)
-                        .ignoresSafeArea(.container, edges: .bottom)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
                 
                 // 底部控制栏
                 bottomBar
+                    .padding(.bottom, UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0)
             }
         }
+        .ignoresSafeArea()
         .navigationBarHidden(true)
+        .navigationBarBackButtonHidden(true)
         .sheet(isPresented: $showToc) {
             tocView
                 .environmentObject(appState)
@@ -145,15 +150,7 @@ struct ReaderView: View {
     private var topBar: some View {
         HStack {
             Button(action: {
-                // 返回
-                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                   let rootVC = windowScene.windows.first?.rootViewController {
-                    if let navVC = rootVC as? UINavigationController ?? rootVC.navigationController {
-                        navVC.popViewController(animated: true)
-                    } else {
-                        rootVC.dismiss(animated: true)
-                    }
-                }
+                presentationMode.wrappedValue.dismiss()
             }) {
                 Image(systemName: "chevron.left")
                     .font(.vt(size: 16))

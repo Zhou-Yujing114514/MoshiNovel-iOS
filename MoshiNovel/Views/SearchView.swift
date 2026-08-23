@@ -269,10 +269,13 @@ struct SearchView: View {
         
         do {
             let results = try await APIService.shared.searchBooks(query)
+            // 检查是否已取消或 query 已变化，防止旧结果覆盖新结果
+            if Task.isCancelled || query != searchText { return }
             await MainActor.run {
                 self.searchResults = results
             }
         } catch {
+            if Task.isCancelled { return }
             print("搜索失败: \(error)")
             await MainActor.run {
                 self.searchError = error.localizedDescription

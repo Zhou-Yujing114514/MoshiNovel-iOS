@@ -207,8 +207,8 @@ struct DownloadView: View {
     
     private func startAutoRefresh() {
         stopAutoRefresh()
-        timer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { _ in
-            Task { await loadTasks() }
+        timer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
+            Task { await self?.loadTasks() }
         }
     }
     

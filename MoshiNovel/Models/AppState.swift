@@ -36,6 +36,7 @@ extension Color {
 }
 
 // MARK: - 应用状态
+@MainActor
 class AppState: ObservableObject {
     @Published var currentUser: User?
     @Published var siteConfig: SiteConfig?

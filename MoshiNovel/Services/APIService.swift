@@ -44,6 +44,15 @@ class APIService {
             throw APIError.unauthorized
         }
         
+        // 非 2xx 状态码，先尝试解析通用错误结构
+        if !(200...299).contains(httpResponse.statusCode) {
+            if let errorResp = try? JSONDecoder().decode(BasicResponse.self, from: data),
+               let errorMsg = errorResp.error, !errorMsg.isEmpty {
+                throw APIError.serverError(errorMsg)
+            }
+            throw APIError.serverError("服务器错误 (\(httpResponse.statusCode))")
+        }
+        
         let decoder = JSONDecoder()
         // 注意：不使用 convertFromSnakeCase，所有模型都用自定义 CodingKeys 显式映射
         

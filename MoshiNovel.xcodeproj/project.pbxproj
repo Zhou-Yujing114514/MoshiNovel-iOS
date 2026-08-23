@@ -14,7 +14,7 @@
 		A100000410000000000001 /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000410000000000001 /* DownloadManager.swift */; };
 		A100000500000000000001 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000500000000000001 /* SearchView.swift */; };
 		A100000600000000000001 /* DownloadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000600000000000001 /* DownloadView.swift */; };
-		A100000700000000000001 /* ReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200001000000000000001 /* ReaderView.swift */; };
+		A100001000000000000001 /* ReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200001000000000000001 /* ReaderView.swift */; };
 		A100000700000000000001 /* MineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000700000000000001 /* MineView.swift */; };
 		A100000800000000000001 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000800000000000001 /* LoginView.swift */; };
 		A100000900000000000001 /* FormatSelectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000900000000000001 /* FormatSelectView.swift */; };
@@ -185,7 +185,7 @@
 				A100000410000000000001 /* DownloadManager.swift in Sources */,
 				A100000500000000000001 /* SearchView.swift in Sources */,
 				A100000600000000000001 /* DownloadView.swift in Sources */,
-				A100000700000000000001 /* ReaderView.swift in Sources */,
+				A100001000000000000001 /* ReaderView.swift in Sources */,
 				A100000700000000000001 /* MineView.swift in Sources */,
 				A100000800000000000001 /* LoginView.swift in Sources */,
 				A100000900000000000001 /* FormatSelectView.swift in Sources */,

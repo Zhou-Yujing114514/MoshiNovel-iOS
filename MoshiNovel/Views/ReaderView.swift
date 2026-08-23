@@ -74,6 +74,7 @@ struct ReaderView: View {
     @State private var showToc = false
     @State private var fontSize: CGFloat = 17
     @State private var pollingTimer: Timer?
+    @State private var showUI = true
     
     var body: some View {
         ZStack {
@@ -138,9 +139,19 @@ struct ReaderView: View {
                 .environmentObject(appState)
         }
         .onAppear {
+            // 隐藏底部 TabBar
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let window = windowScene.windows.first {
+                findTabBar(in: window)?.isHidden = true
+            }
             Task { await initReader() }
         }
         .onDisappear {
+            // 恢复底部 TabBar
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let window = windowScene.windows.first {
+                findTabBar(in: window)?.isHidden = false
+            }
             pollingTimer?.invalidate()
             pollingTimer = nil
         }
@@ -349,4 +360,17 @@ struct ReaderView: View {
             }
         }
     }
+}
+
+// 遍历视图查找 UITabBar
+func findTabBar(in view: UIView) -> UITabBar? {
+    for subview in view.subviews {
+        if let tabBar = subview as? UITabBar {
+            return tabBar
+        }
+        if let found = findTabBar(in: subview) {
+            return found
+        }
+    }
+    return nil
 }

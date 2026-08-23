@@ -34,6 +34,12 @@ struct SearchView: View {
             }
             .background(appState.bgColor)
             .navigationBarHidden(true)
+            .background(
+                NavigationLink(destination: ReaderView(taskId: readerTaskId).environmentObject(appState), isActive: $showReaderLink) {
+                    EmptyView()
+                }
+                .hidden()
+            )
         }
         .sheet(item: $selectedBook) { book in
             FormatSelectView(book: book) {
@@ -41,12 +47,6 @@ struct SearchView: View {
             }
             .environmentObject(appState)
         }
-        .background(
-            NavigationLink(destination: ReaderView(taskId: readerTaskId).environmentObject(appState), isActive: $showReaderLink) {
-                EmptyView()
-            }
-            .hidden()
-        )
     }
     
     // MARK: - 顶部标题

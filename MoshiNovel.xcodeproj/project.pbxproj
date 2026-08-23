@@ -14,7 +14,7 @@
 		A100000410000000000001 /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000410000000000001 /* DownloadManager.swift */; };
 		A100000500000000000001 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000500000000000001 /* SearchView.swift */; };
 		A100000600000000000001 /* DownloadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000600000000000001 /* DownloadView.swift */; };
-		A100000700000000000001 /* ReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000700000000000001 /* ReaderView.swift */; };
+		A100000700000000000001 /* ReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200001000000000000001 /* ReaderView.swift */; };
 		A100000700000000000001 /* MineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000700000000000001 /* MineView.swift */; };
 		A100000800000000000001 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000800000000000001 /* LoginView.swift */; };
 		A100000900000000000001 /* FormatSelectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000900000000000001 /* FormatSelectView.swift */; };
@@ -29,7 +29,7 @@
 		A200000410000000000001 /* DownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManager.swift; sourceTree = "<group>"; };
 		A200000500000000000001 /* SearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchView.swift; sourceTree = "<group>"; };
 		A200000600000000000001 /* DownloadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadView.swift; sourceTree = "<group>"; };
-		A200000700000000000001 /* ReaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderView.swift; sourceTree = "<group>"; };
+		A200001000000000000001 /* ReaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderView.swift; sourceTree = "<group>"; };
 		A200000700000000000001 /* MineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MineView.swift; sourceTree = "<group>"; };
 		A200000800000000000001 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		A200000900000000000001 /* FormatSelectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormatSelectView.swift; sourceTree = "<group>"; };
@@ -101,7 +101,7 @@
 			children = (
 				A200000500000000000001 /* SearchView.swift */,
 				A200000600000000000001 /* DownloadView.swift */,
-				A200000700000000000001 /* ReaderView.swift */,
+				A200001000000000000001 /* ReaderView.swift */,
 				A200000700000000000001 /* MineView.swift */,
 				A200000800000000000001 /* LoginView.swift */,
 				A200000900000000000001 /* FormatSelectView.swift */,

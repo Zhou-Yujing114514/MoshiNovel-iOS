@@ -89,8 +89,8 @@ class APIService {
     }
     
     // MARK: - 任务
-    func fetchTasks(list: String = "mine") async throws -> TaskListResponse {
-        return try await request("/api/tasks?list=\(list)")
+    func fetchTasks() async throws -> TaskListResponse {
+        return try await request("/api/tasks")
     }
     
     func submitTask(bookId: String, format: String) async throws -> SubmitResponse {

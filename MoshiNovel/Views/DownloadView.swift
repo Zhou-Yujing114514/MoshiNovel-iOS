@@ -114,11 +114,11 @@ struct DownloadView: View {
                         .foregroundColor(appState.mutedColor)
                 }
                 Spacer()
-                statusBadge(task.status)
+                statusBadge(task.state)
             }
             
             // 进度条
-            if task.status == .running {
+            if task.state == .running {
                 VStack(alignment: .leading, spacing: 4) {
                     ProgressView(value: Double(task.progress ?? 0), total: 100)
                         .tint(.vtAccent)
@@ -131,7 +131,7 @@ struct DownloadView: View {
             }
             
             // 错误信息
-            if task.status == .failed, let error = task.error {
+            if task.state == .failed, let error = task.error {
                 Text(error)
                     .font(.vt(size: 12))
                     .foregroundColor(.vtRed)
@@ -139,7 +139,7 @@ struct DownloadView: View {
             }
             
             // 下载按钮
-            if task.status == .done {
+            if task.state == .done {
                 HStack {
                     if let url = task.downloadUrl, !url.isEmpty, task.expired != true {
                         Link(destination: URL(string: url)!) {
@@ -222,18 +222,21 @@ struct DownloadView: View {
         defer { isLoading = false }
         
         do {
-            if selectedList == 0 {
-                let response = try await APIService.shared.fetchTasks(list: "mine")
-                await MainActor.run {
-                    myTasks = response.items ?? []
-                    appState.runningCount = response.running ?? 0
-                    appState.queuedCount = response.queued ?? 0
+            let response = try await APIService.shared.fetchTasks()
+            let allItems = response.items ?? []
+            await MainActor.run {
+                appState.runningCount = response.running ?? 0
+                appState.queuedCount = response.queued ?? 0
+                // 我的任务：按用户名过滤
+                if let currentUser = appState.currentUser {
+                    myTasks = allItems.filter {
+                        $0.username?.lowercased() == currentUser.username.lowercased()
+                    }
+                } else {
+                    myTasks = []
                 }
-            } else {
-                let response = try await APIService.shared.fetchTasks(list: "all")
-                await MainActor.run {
-                    allTasks = response.items ?? []
-                }
+                // 全站任务：只显示未完成的
+                allTasks = allItems.filter { $0.state != .done }
             }
         } catch {
             print("加载任务失败: \(error)")

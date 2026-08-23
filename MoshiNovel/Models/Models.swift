@@ -52,11 +52,11 @@ struct SearchResult: Codable, Identifiable {
 
 // MARK: - 下载任务
 struct DownloadTask: Codable, Identifiable {
-    let id: String
-    let bookId: String
-    let bookTitle: String
-    let format: String
-    let status: TaskStatus
+    let id: Int
+    let bookId: String?
+    let bookTitle: String?
+    let format: String?
+    let state: TaskStatus?
     let progress: Int?
     let totalChapters: Int?
     let downloadedChapters: Int?
@@ -70,7 +70,7 @@ struct DownloadTask: Codable, Identifiable {
         case id
         case bookId = "book_id"
         case bookTitle = "book_title"
-        case format, status, progress
+        case format, state, progress
         case totalChapters = "total_chapters"
         case downloadedChapters = "downloaded_chapters"
         case downloadUrl = "download_url"

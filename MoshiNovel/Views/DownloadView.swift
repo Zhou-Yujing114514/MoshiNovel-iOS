@@ -11,6 +11,7 @@ struct DownloadView: View {
     @State private var timer: Timer?
     @State private var downloadingTaskId: Int?
     @State private var downloadProgress: Double = 0
+    @State private var downloadManager: DownloadManager?
     
     var body: some View {
         NavigationView {
@@ -170,7 +171,7 @@ struct DownloadView: View {
                             }
                         } else {
                             Button(action: {
-                                Task { await downloadFile(task: task, urlStr: urlStr) }
+                                downloadFile(task: task, urlStr: urlStr)
                             }) {
                                 HStack {
                                     Image(systemName: "arrow.down.circle.fill")
@@ -273,7 +274,7 @@ struct DownloadView: View {
         }
     }
     
-    private func downloadFile(task: DownloadTask, urlStr: String) async {
+    private func downloadFile(task: DownloadTask, urlStr: String) {
         // 处理相对路径
         let fullUrl: String
         if urlStr.hasPrefix("http") {
@@ -287,44 +288,40 @@ struct DownloadView: View {
             return
         }
         
-        await MainActor.run {
-            downloadingTaskId = task.id
-            downloadProgress = 0
-        }
+        downloadingTaskId = task.id
+        downloadProgress = 0
         
-        defer {
-            Task { @MainActor in
-                downloadingTaskId = nil
-            }
-        }
+        // 保存到临时文件
+        let fileName = url.lastPathComponent.isEmpty ? "download.\(task.format ?? "txt")" : url.lastPathComponent
+        let tempDir = FileManager.default.temporaryDirectory
+        let fileURL = tempDir.appendingPathComponent(fileName)
         
-        do {
-            // 下载文件
-            let (data, response) = try await URLSession.shared.data(from: url)
-            
-            guard let httpResponse = response as? HTTPURLResponse,
-                  (200...299).contains(httpResponse.statusCode) else {
-                print("下载失败: HTTP 状态码错误")
-                return
+        let manager = DownloadManager()
+        downloadManager = manager
+        
+        manager.download(url: url, to: fileURL, progress: { [weak self] progress in
+            DispatchQueue.main.async {
+                self?.downloadProgress = progress
             }
-            
-            // 保存到临时文件
-            let fileName = url.lastPathComponent.isEmpty ? "download.\(task.format ?? "txt")" : url.lastPathComponent
-            let tempDir = FileManager.default.temporaryDirectory
-            let fileURL = tempDir.appendingPathComponent(fileName)
-            
-            try data.write(to: fileURL)
-            
-            print("下载完成: \(fileURL.path), 大小: \(data.count) 字节")
-            
-            // 弹出分享/保存面板
-            await MainActor.run {
+        }, completion: { [weak self] fileURL, error in
+            DispatchQueue.main.async {
+                self?.downloadingTaskId = nil
+                self?.downloadManager = nil
+                
+                if let error = error {
+                    print("下载失败: \(error)")
+                    return
+                }
+                
+                guard let fileURL = fileURL else { return }
+                
+                print("下载完成: \(fileURL.path)")
+                
+                // 弹出分享/保存面板
                 let activityVC = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
                 
-                // 获取当前窗口的 rootViewController
                 if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                    let rootVC = windowScene.windows.first?.rootViewController {
-                    // iPad 需要设置 popoverPresentationController
                     if let popover = activityVC.popoverPresentationController {
                         popover.sourceView = rootVC.view
                         popover.sourceRect = CGRect(x: rootVC.view.bounds.midX, y: rootVC.view.bounds.midY, width: 0, height: 0)
@@ -333,9 +330,6 @@ struct DownloadView: View {
                     rootVC.present(activityVC, animated: true)
                 }
             }
-            
-        } catch {
-            print("下载失败: \(error)")
-        }
+        })
     }
 }

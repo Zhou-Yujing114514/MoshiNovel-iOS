@@ -11,6 +11,7 @@
 		A100000200000000000001 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000200000000000001 /* Models.swift */; };
 		A100000300000000000001 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000300000000000001 /* AppState.swift */; };
 		A100000400000000000001 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000400000000000001 /* APIService.swift */; };
+		A100000410000000000001 /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000410000000000001 /* DownloadManager.swift */; };
 		A100000500000000000001 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000500000000000001 /* SearchView.swift */; };
 		A100000600000000000001 /* DownloadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000600000000000001 /* DownloadView.swift */; };
 		A100000700000000000001 /* MineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000700000000000001 /* MineView.swift */; };
@@ -24,6 +25,7 @@
 		A200000200000000000001 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		A200000300000000000001 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		A200000400000000000001 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
+		A200000410000000000001 /* DownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManager.swift; sourceTree = "<group>"; };
 		A200000500000000000001 /* SearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchView.swift; sourceTree = "<group>"; };
 		A200000600000000000001 /* DownloadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadView.swift; sourceTree = "<group>"; };
 		A200000700000000000001 /* MineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MineView.swift; sourceTree = "<group>"; };
@@ -87,6 +89,7 @@
 			isa = PBXGroup;
 			children = (
 				A200000400000000000001 /* APIService.swift */,
+				A200000410000000000001 /* DownloadManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -176,6 +179,7 @@
 				A100000200000000000001 /* Models.swift in Sources */,
 				A100000300000000000001 /* AppState.swift in Sources */,
 				A100000400000000000001 /* APIService.swift in Sources */,
+				A100000410000000000001 /* DownloadManager.swift in Sources */,
 				A100000500000000000001 /* SearchView.swift in Sources */,
 				A100000600000000000001 /* DownloadView.swift in Sources */,
 				A100000700000000000001 /* MineView.swift in Sources */,

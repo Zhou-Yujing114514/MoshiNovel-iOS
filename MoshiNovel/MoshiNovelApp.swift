@@ -47,8 +47,10 @@ struct ContentView: View {
             }
             .accentColor(.vtAccent)
             .onAppear {
-                UITabBar.appearance().backgroundColor = UIColor(AppState.shared.cardColor)
-                UITabBar.appearance().unselectedItemTintColor = UIColor(AppState.shared.mutedColor)
+                updateTabBarAppearance()
+            }
+            .onChange(of: appState.isDayMode) { _ in
+                updateTabBarAppearance()
             }
         }
         .sheet(isPresented: $showLogin) {
@@ -82,5 +84,26 @@ struct ContentView: View {
         } catch {
             print("检查登录状态失败: \(error)")
         }
+    }
+    
+    private func updateTabBarAppearance() {
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(appState.cardColor)
+        appearance.selectionIndicatorTintColor = UIColor(.vtAccent)
+        
+        let itemAppearance = UITabBarItemAppearance()
+        itemAppearance.normal.iconColor = UIColor(appState.mutedColor)
+        itemAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor(appState.mutedColor)]
+        itemAppearance.selected.iconColor = UIColor(.vtAccent)
+        itemAppearance.selected.titleTextAttributes = [.foregroundColor: UIColor(.vtAccent)]
+        
+        appearance.stackedLayoutAppearance = itemAppearance
+        appearance.inlineLayoutAppearance = itemAppearance
+        appearance.compactInlineLayoutAppearance = itemAppearance
+        
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
+        UITabBar.appearance().unselectedItemTintColor = UIColor(appState.mutedColor)
     }
 }

@@ -94,7 +94,7 @@ class APIService {
     }
     
     func submitTask(bookId: String, format: String) async throws -> SubmitResponse {
-        return try await request("/api/submit", method: "POST", body: ["book_id": bookId, "format": format])
+        return try await request("/api/tasks", method: "POST", body: ["book_id": bookId, "format": format])
     }
     
     // MARK: - 管理

@@ -113,7 +113,8 @@ struct MeResponse: Codable {
 struct SubmitResponse: Codable {
     let ok: Bool?
     let error: String?
-    let id: String?
+    let id: Int?
+    let position: Int?
 }
 
 struct BasicResponse: Codable {

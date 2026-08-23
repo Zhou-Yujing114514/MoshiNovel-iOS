@@ -299,14 +299,14 @@ struct DownloadView: View {
         let manager = DownloadManager()
         downloadManager = manager
         
-        manager.download(url: url, to: fileURL, progress: { [weak self] progress in
+        manager.download(url: url, to: fileURL, progress: { progress in
             DispatchQueue.main.async {
-                self?.downloadProgress = progress
+                self.downloadProgress = progress
             }
-        }, completion: { [weak self] fileURL, error in
+        }, completion: { fileURL, error in
             DispatchQueue.main.async {
-                self?.downloadingTaskId = nil
-                self?.downloadManager = nil
+                self.downloadingTaskId = nil
+                self.downloadManager = nil
                 
                 if let error = error {
                     print("下载失败: \(error)")

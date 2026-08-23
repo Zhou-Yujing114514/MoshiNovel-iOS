@@ -8,7 +8,7 @@ struct SearchView: View {
     @State private var searchError: String = ""
     @State private var isSearching = false
     @State private var selectedBook: SearchResult?
-    @State private var showReader = false
+    @State private var showReaderLink = false
     @State private var readerTaskId = 0
     @State private var isCreatingPreview = false
     @State private var searchTask: Task<Void, Never>?
@@ -41,10 +41,12 @@ struct SearchView: View {
             }
             .environmentObject(appState)
         }
-        .sheet(isPresented: $showReader) {
-            ReaderView(taskId: readerTaskId)
-                .environmentObject(appState)
-        }
+        .background(
+            NavigationLink(destination: ReaderView(taskId: readerTaskId).environmentObject(appState), isActive: $showReaderLink) {
+                EmptyView()
+            }
+            .hidden()
+        )
     }
     
     // MARK: - 顶部标题
@@ -320,7 +322,7 @@ struct SearchView: View {
             let response = try await APIService.shared.submitTask(bookId: book.id, format: "epub")
             if let taskId = response.id {
                 readerTaskId = taskId
-                showReader = true
+                showReaderLink = true
             }
         } catch {
             print("创建预览任务失败: \(error)")

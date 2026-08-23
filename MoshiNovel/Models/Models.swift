@@ -218,7 +218,11 @@ struct BookMeta: Codable {
 }
 
 struct Chapter: Codable, Identifiable {
-    let id: String
+    var id: String { title }
     let title: String
     let href: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case title, href
+    }
 }

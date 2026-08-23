@@ -148,7 +148,11 @@ struct ReaderView: View {
                 // 返回
                 if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                    let rootVC = windowScene.windows.first?.rootViewController {
-                    rootVC.dismiss(animated: true)
+                    if let navVC = rootVC as? UINavigationController ?? rootVC.navigationController {
+                        navVC.popViewController(animated: true)
+                    } else {
+                        rootVC.dismiss(animated: true)
+                    }
                 }
             }) {
                 Image(systemName: "chevron.left")

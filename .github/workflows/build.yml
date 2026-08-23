@@ -1,0 +1,41 @@
+name: Build IPA
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+    
+    - name: Build IPA
+      run: |
+        xcodebuild -project MoshiNovel.xcodeproj \
+          -scheme MoshiNovel \
+          -configuration Release \
+          -sdk iphoneos \
+          -derivedDataPath build \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO \
+          build
+        
+        # 创建 IPA
+        mkdir -p Payload
+        cp -r build/Build/Products/Release-iphoneos/MoshiNovel.app Payload/
+        zip -r MoshiNovel.ipa Payload
+        rm -rf Payload
+    
+    - name: Upload IPA
+      uses: actions/upload-artifact@v4
+      with:
+        name: MoshiNovel-ipa
+        path: MoshiNovel.ipa

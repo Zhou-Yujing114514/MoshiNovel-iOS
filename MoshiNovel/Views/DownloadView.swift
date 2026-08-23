@@ -100,21 +100,21 @@ struct DownloadView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
-                        Text(task.bookTitle)
+                        Text(task.bookTitle ?? "未知书籍")
                             .font(.vt(size: 14))
                             .fontWeight(.semibold)
                             .foregroundColor(appState.textColor)
                             .lineLimit(1)
-                        Text(task.bookId)
+                        Text(task.bookId ?? "")
                             .font(.vt(size: 11))
                             .foregroundColor(appState.mutedColor)
                     }
-                    Text(task.format.uppercased())
+                    Text(task.format?.uppercased() ?? "")
                         .font(.vt(size: 12))
                         .foregroundColor(appState.mutedColor)
                 }
                 Spacer()
-                statusBadge(task.state)
+                statusBadge(task.state ?? .queued)
             }
             
             // 进度条

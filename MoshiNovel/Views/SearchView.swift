@@ -145,7 +145,7 @@ struct SearchView: View {
             .padding(.top, 10)
             
             // 公告
-            if let notice = appState.siteConfig?.notice, !notice.isEmpty {
+            if let notice = appState.siteConfig?.siteNotice, !notice.isEmpty {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
                         Text("公告")

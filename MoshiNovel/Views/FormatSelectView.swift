@@ -126,6 +126,13 @@ struct AdminView: View {
     @State private var users: [User] = []
     @State private var isLoading = false
     @State private var message = ""
+    @State private var showTitleAlert = false
+    @State private var titleInput = ""
+    @State private var targetUser: User?
+    @State private var showDeleteConfirm = false
+    
+    private var isAdmin: Bool { appState.currentUser?.isAdmin == true }
+    private var isHighRank: Bool { appState.currentUser?.highRank == true }
     
     var body: some View {
         NavigationView {
@@ -137,24 +144,26 @@ struct AdminView: View {
                     .padding(.top, 20)
                 
                 // 清空记录
-                Button(action: {
-                    Task { await clearRecords() }
-                }) {
-                    HStack {
-                        Image(systemName: "trash.fill")
-                            .foregroundColor(.white)
-                        Text("清空所有下载记录")
-                            .font(.vt(size: 14))
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                        Spacer()
+                if isAdmin {
+                    Button(action: {
+                        Task { await clearRecords() }
+                    }) {
+                        HStack {
+                            Image(systemName: "trash.fill")
+                                .foregroundColor(.white)
+                            Text("清空所有下载记录")
+                                .font(.vt(size: 14))
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                            Spacer()
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(Color.vtRed)
+                        .cornerRadius(8)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(Color.vtRed)
-                    .cornerRadius(8)
+                    .padding(.horizontal)
                 }
-                .padding(.horizontal)
                 
                 if !message.isEmpty {
                     Text(message)
@@ -164,13 +173,19 @@ struct AdminView: View {
                 
                 // 用户列表
                 HStack {
-                    Text("注册用户")
+                    Text("注册用户 (\(users.count))")
                         .font(.vt(size: 15))
                         .fontWeight(.semibold)
                         .foregroundColor(appState.textColor)
                     Spacer()
                     if isLoading {
                         ProgressView()
+                    }
+                    Button(action: {
+                        Task { await loadUsers() }
+                    }) {
+                        Image(systemName: "arrow.clockwise")
+                            .foregroundColor(.vtAccent)
                     }
                 }
                 .padding(.horizontal)
@@ -199,12 +214,37 @@ struct AdminView: View {
             .onAppear {
                 Task { await loadUsers() }
             }
+            .alert("设置头衔", isPresented: $showTitleAlert) {
+                TextField("头衔名称（留空则撤销）", text: $titleInput)
+                Button("确定") {
+                    if let user = targetUser {
+                        Task { await setTitle(user: user, title: titleInput) }
+                    }
+                }
+                Button("取消", role: .cancel) {}
+            } message: {
+                if let user = targetUser {
+                    Text("为「\(user.username)」设置头衔")
+                }
+            }
+            .alert("确认删除", isPresented: $showDeleteConfirm) {
+                Button("删除", role: .destructive) {
+                    if let user = targetUser {
+                        Task { await deleteUser(user: user) }
+                    }
+                }
+                Button("取消", role: .cancel) {}
+            } message: {
+                if let user = targetUser {
+                    Text("确定删除账户「\(user.username)」？该操作不可恢复。")
+                }
+            }
         }
     }
     
     private func userRow(_ user: User) -> some View {
         HStack {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 4) {
                     Text(user.username)
                         .font(.vt(size: 14))
@@ -217,17 +257,73 @@ struct AdminView: View {
                             .padding(.vertical, 2)
                             .background(Color.vtAmber.opacity(0.2))
                             .cornerRadius(4)
-                    }
-                    if let title = user.title, !title.isEmpty {
+                    } else if let title = user.title, !title.isEmpty {
                         Text(title)
                             .font(.vt(size: 10))
                             .foregroundColor(.vtAccent)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.vtAccent.opacity(0.15))
+                            .cornerRadius(4)
                     }
+                    if user.highRank == true {
+                        Text("高权")
+                            .font(.vt(size: 10))
+                            .foregroundColor(.vtGreen)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.vtGreen.opacity(0.2))
+                            .cornerRadius(4)
+                    }
+                }
+                if let createdAt = user.createdAt {
+                    Text(formatTime(createdAt) + " 注册")
+                        .font(.vt(size: 11))
+                        .foregroundColor(appState.mutedColor)
                 }
             }
             Spacer()
+            HStack(spacing: 6) {
+                // 设头衔（仅站长）
+                if isAdmin && user.isAdmin != true {
+                    Button(action: {
+                        targetUser = user
+                        titleInput = user.title ?? ""
+                        showTitleAlert = true
+                    }) {
+                        Text(user.title?.isEmpty == false ? "改头衔" : "设头衔")
+                            .font(.vt(size: 11))
+                            .foregroundColor(appState.textColor)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(appState.bgColor)
+                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(appState.borderColor, lineWidth: 1)
+                            )
+                    }
+                }
+                // 删除用户（站长可删非站长，高权可删普通用户）
+                let canDelete = (isAdmin && user.isAdmin != true) ||
+                                (isHighRank && user.isAdmin != true && user.highRank != true)
+                if canDelete {
+                    Button(action: {
+                        targetUser = user
+                        showDeleteConfirm = true
+                    }) {
+                        Text("删除")
+                            .font(.vt(size: 11))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.vtRed)
+                            .cornerRadius(6)
+                    }
+                }
+            }
         }
-        .padding(10)
+        .padding(12)
         .background(appState.cardColor)
         .cornerRadius(8)
         .overlay(
@@ -236,14 +332,48 @@ struct AdminView: View {
         )
     }
     
+    private func formatTime(_ timestamp: TimeInterval) -> String {
+        let date = Date(timeIntervalSince1970: timestamp)
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MM-dd HH:mm"
+        return formatter.string(from: date)
+    }
+    
     private func loadUsers() async {
         isLoading = true
+        message = ""
         defer { isLoading = false }
         do {
             let list = try await APIService.shared.fetchUsers()
             await MainActor.run { users = list }
         } catch {
-            print("加载用户失败: \(error)")
+            await MainActor.run { message = error.localizedDescription }
+        }
+    }
+    
+    private func setTitle(user: User, title: String) async {
+        do {
+            try await APIService.shared.setUserTitle(username: user.username, title: title)
+            await MainActor.run {
+                message = "已设置「\(user.username)」的头衔"
+                targetUser = nil
+            }
+            await loadUsers()
+        } catch {
+            await MainActor.run { message = error.localizedDescription }
+        }
+    }
+    
+    private func deleteUser(user: User) async {
+        do {
+            try await APIService.shared.deleteUser(username: user.username)
+            await MainActor.run {
+                message = "已删除「\(user.username)」"
+                targetUser = nil
+            }
+            await loadUsers()
+        } catch {
+            await MainActor.run { message = error.localizedDescription }
         }
     }
     
@@ -252,7 +382,7 @@ struct AdminView: View {
             try await APIService.shared.clearRecords()
             await MainActor.run { message = "已清空下载记录" }
         } catch {
-            message = error.localizedDescription
+            await MainActor.run { message = error.localizedDescription }
         }
     }
 }

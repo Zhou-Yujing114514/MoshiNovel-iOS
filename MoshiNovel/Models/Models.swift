@@ -4,28 +4,35 @@ import Foundation
 struct SiteConfig: Codable {
     let siteTitle: String?
     let siteOwner: String?
-    let notice: String?
+    let siteNotice: String?
+    let siteVersion: String?
     let disabled: Bool?
-    let version: String?
+    let maintenance: Bool?
     
     enum CodingKeys: String, CodingKey {
         case siteTitle = "site_title"
         case siteOwner = "site_owner"
-        case notice, disabled, version
+        case siteNotice = "site_notice"
+        case siteVersion = "site_version"
+        case disabled, maintenance
     }
 }
 
-// MARK: - 用户
+// MARK: - 用户（用 username 作为唯一标识，服务器不返回 id）
 struct User: Codable, Identifiable {
-    let id: String
+    var id: String { username }
     let username: String
     let isAdmin: Bool?
+    let highRank: Bool?
     let title: String?
+    let createdAt: TimeInterval?
     
     enum CodingKeys: String, CodingKey {
-        case id, username
+        case username
         case isAdmin = "is_admin"
+        case highRank = "high_rank"
         case title
+        case createdAt = "created_at"
     }
 }
 
@@ -92,12 +99,6 @@ enum TaskStatus: String, Codable {
 }
 
 // MARK: - API 响应
-struct APIResponse<T: Codable>: Codable {
-    let ok: Bool?
-    let error: String?
-    let data: T?
-}
-
 struct LoginResponse: Codable {
     let ok: Bool?
     let error: String?
@@ -113,4 +114,9 @@ struct TaskListResponse: Codable {
 
 struct SearchResponse: Codable {
     let items: [SearchResult]?
+}
+
+struct UserListResponse: Codable {
+    let items: [User]?
+    let error: String?
 }

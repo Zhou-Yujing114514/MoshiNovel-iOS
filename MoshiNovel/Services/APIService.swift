@@ -6,12 +6,15 @@ class APIService {
     // 服务器地址 - 摩柿小说下载站
     private let baseURL = "https://morax.kdns.fr"
     
-    private var token: String? {
-        get { UserDefaults.standard.string(forKey: "moshi_token") }
-        set { UserDefaults.standard.set(newValue, forKey: "moshi_token") }
-    }
+    // 使用共享 session，自动管理 cookie
+    private let session: URLSession
     
-    private init() {}
+    private init() {
+        let config = URLSessionConfiguration.default
+        config.httpCookieAcceptPolicy = .always
+        config.httpShouldSetCookies = true
+        self.session = URLSession(configuration: config)
+    }
     
     // MARK: - 通用请求
     private func request<T: Codable>(_ path: String, method: String = "GET", body: [String: Any]? = nil) async throws -> T {
@@ -22,22 +25,18 @@ class APIService {
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        if let token = token {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
         
         if let body = body {
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
         }
         
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await session.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse else {
             throw APIError.invalidResponse
         }
         
         if httpResponse.statusCode == 401 {
-            token = nil
             throw APIError.unauthorized
         }
         
@@ -74,7 +73,6 @@ class APIService {
     
     func logout() async {
         _ = try? await request("/api/logout", method: "POST", body: [:]) as [String: Bool]?
-        token = nil
     }
     
     // MARK: - 搜索
@@ -95,12 +93,16 @@ class APIService {
     
     // MARK: - 管理
     func fetchUsers() async throws -> [User] {
-        let response: [String: [User]] = try await request("/api/admin/users")
-        return response["items"] ?? []
+        let response: UserListResponse = try await request("/api/admin/users")
+        return response.items ?? []
     }
     
     func setUserTitle(username: String, title: String) async throws {
         _ = try await request("/api/admin/set-title", method: "POST", body: ["username": username, "title": title]) as [String: Bool]?
+    }
+    
+    func deleteUser(username: String) async throws {
+        _ = try await request("/api/admin/delete-user", method: "POST", body: ["username": username]) as [String: Bool]?
     }
     
     func clearRecords() async throws {

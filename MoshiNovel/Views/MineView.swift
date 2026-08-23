@@ -84,7 +84,7 @@ struct MineView: View {
             .padding(.vertical, 20)
             
             // 功能按钮
-            if appState.currentUser?.isAdmin == true {
+            if appState.currentUser?.isAdmin == true || appState.currentUser?.highRank == true {
                 menuButton(title: "管理", icon: "gearshape.fill", color: .vtAmber) {
                     showAdmin = true
                 }
@@ -173,7 +173,7 @@ struct AboutView: View {
                     .foregroundColor(appState.textColor)
                 
                 VStack(spacing: 8) {
-                    aboutRow(label: "版本号", value: appState.siteConfig?.version ?? "v1.0.0")
+                    aboutRow(label: "版本号", value: appState.siteConfig?.siteVersion ?? "v1.0.0")
                     aboutRow(label: "联系方式", value: "QQ 941029753")
                 }
                 .padding(.horizontal, 20)

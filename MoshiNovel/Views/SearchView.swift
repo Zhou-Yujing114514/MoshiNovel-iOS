@@ -8,7 +8,6 @@ struct SearchView: View {
     @State private var searchError: String = ""
     @State private var isSearching = false
     @State private var selectedBook: SearchResult?
-    @State private var showFormatModal = false
     @State private var searchTask: Task<Void, Never>?
     
     var body: some View {
@@ -33,13 +32,11 @@ struct SearchView: View {
             .background(appState.bgColor)
             .navigationBarHidden(true)
         }
-        .sheet(isPresented: $showFormatModal) {
-            if let book = selectedBook {
-                FormatSelectView(book: book) {
-                    showFormatModal = false
-                }
-                .environmentObject(appState)
+        .sheet(item: $selectedBook) { book in
+            FormatSelectView(book: book) {
+                selectedBook = nil
             }
+            .environmentObject(appState)
         }
     }
     
@@ -241,7 +238,6 @@ struct SearchView: View {
                     return
                 }
                 selectedBook = book
-                showFormatModal = true
             }) {
                 Text("下载")
                     .font(.vt(size: 12))

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct DownloadView: View {
     @EnvironmentObject var appState: AppState
@@ -8,6 +9,8 @@ struct DownloadView: View {
     @State private var allTasks: [DownloadTask] = []
     @State private var isLoading = false
     @State private var timer: Timer?
+    @State private var downloadingTaskId: Int?
+    @State private var downloadProgress: Double = 0
     
     var body: some View {
         NavigationView {
@@ -155,19 +158,32 @@ struct DownloadView: View {
             // 下载按钮
             if task.state == .done {
                 HStack {
-                    if let url = task.downloadUrl, !url.isEmpty, task.expired != true {
-                        Link(destination: URL(string: url)!) {
-                            HStack {
-                                Image(systemName: "arrow.down.circle.fill")
-                                Text("下载文件")
+                    if let urlStr = task.downloadUrl, !urlStr.isEmpty, task.expired != true {
+                        if downloadingTaskId == task.id {
+                            // 下载中
+                            VStack(alignment: .leading, spacing: 4) {
+                                ProgressView(value: downloadProgress)
+                                    .tint(.vtGreen)
+                                Text("正在下载... \(Int(downloadProgress * 100))%")
+                                    .font(.vt(size: 11))
+                                    .foregroundColor(appState.mutedColor)
                             }
-                            .font(.vt(size: 13))
-                            .fontWeight(.semibold)
-                            .foregroundColor(Color(hex: "06120d"))
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(Color.vtGreen)
-                            .cornerRadius(8)
+                        } else {
+                            Button(action: {
+                                Task { await downloadFile(task: task, urlStr: urlStr) }
+                            }) {
+                                HStack {
+                                    Image(systemName: "arrow.down.circle.fill")
+                                    Text("下载文件")
+                                }
+                                .font(.vt(size: 13))
+                                .fontWeight(.semibold)
+                                .foregroundColor(Color(hex: "06120d"))
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(Color.vtGreen)
+                                .cornerRadius(8)
+                            }
                         }
                     } else if task.expired == true {
                         Text("下载链接已过期")
@@ -254,6 +270,72 @@ struct DownloadView: View {
             }
         } catch {
             print("加载任务失败: \(error)")
+        }
+    }
+    
+    private func downloadFile(task: DownloadTask, urlStr: String) async {
+        // 处理相对路径
+        let fullUrl: String
+        if urlStr.hasPrefix("http") {
+            fullUrl = urlStr
+        } else {
+            fullUrl = "https://morax.kdns.fr" + (urlStr.hasPrefix("/") ? urlStr : "/" + urlStr)
+        }
+        
+        guard let url = URL(string: fullUrl) else {
+            print("无效的下载链接: \(fullUrl)")
+            return
+        }
+        
+        await MainActor.run {
+            downloadingTaskId = task.id
+            downloadProgress = 0
+        }
+        
+        defer {
+            Task { @MainActor in
+                downloadingTaskId = nil
+            }
+        }
+        
+        do {
+            // 下载文件
+            let (data, response) = try await URLSession.shared.data(from: url)
+            
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200...299).contains(httpResponse.statusCode) else {
+                print("下载失败: HTTP 状态码错误")
+                return
+            }
+            
+            // 保存到临时文件
+            let fileName = url.lastPathComponent.isEmpty ? "download.\(task.format ?? "txt")" : url.lastPathComponent
+            let tempDir = FileManager.default.temporaryDirectory
+            let fileURL = tempDir.appendingPathComponent(fileName)
+            
+            try data.write(to: fileURL)
+            
+            print("下载完成: \(fileURL.path), 大小: \(data.count) 字节")
+            
+            // 弹出分享/保存面板
+            await MainActor.run {
+                let activityVC = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
+                
+                // 获取当前窗口的 rootViewController
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let rootVC = windowScene.windows.first?.rootViewController {
+                    // iPad 需要设置 popoverPresentationController
+                    if let popover = activityVC.popoverPresentationController {
+                        popover.sourceView = rootVC.view
+                        popover.sourceRect = CGRect(x: rootVC.view.bounds.midX, y: rootVC.view.bounds.midY, width: 0, height: 0)
+                        popover.permittedArrowDirections = []
+                    }
+                    rootVC.present(activityVC, animated: true)
+                }
+            }
+            
+        } catch {
+            print("下载失败: \(error)")
         }
     }
 }

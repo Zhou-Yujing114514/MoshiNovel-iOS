@@ -300,7 +300,17 @@ struct ReaderView: View {
             }
             
             // 加载章节列表
-            chapters = try await APIService.shared.fetchChapters(taskId: taskId)
+            var loadedChapters = try await APIService.shared.fetchChapters(taskId: taskId)
+            
+            // 检查章节顺序：如果第一章标题包含很大的数字，说明是倒序的，需要反转
+            if let firstTitle = loadedChapters.first?.title {
+                if let chapterNum = extractChapterNumber(from: firstTitle), chapterNum > 100 {
+                    loadedChapters.reverse()
+                    print("章节列表检测为倒序，已反转。第一章: \(firstTitle) -> 数字: \(chapterNum)")
+                }
+            }
+            
+            chapters = loadedChapters
             
             if chapters.isEmpty {
                 errorMessage = "暂无章节"
@@ -348,7 +358,12 @@ struct ReaderView: View {
                         bookMeta = meta
                     }
                     // 重新加载章节列表（可能有新章节缓存完成）
-                    let newChapters = try await APIService.shared.fetchChapters(taskId: taskId)
+                    var newChapters = try await APIService.shared.fetchChapters(taskId: taskId)
+                    // 同样检查章节顺序
+                    if let firstTitle = newChapters.first?.title,
+                       let chapterNum = extractChapterNumber(from: firstTitle), chapterNum > 100 {
+                        newChapters.reverse()
+                    }
                     await MainActor.run {
                         if newChapters.count > chapters.count {
                             chapters = newChapters
@@ -373,4 +388,15 @@ func findTabBar(in view: UIView) -> UITabBar? {
         }
     }
     return nil
+}
+
+// 从章节标题中提取数字，例如 "第1684章 xxx" -> 1684
+func extractChapterNumber(from title: String) -> Int? {
+    let pattern = "第(\\d+)章"
+    guard let regex = try? NSRegularExpression(pattern: pattern, options: []),
+          let match = regex.firstMatch(in: title, range: NSRange(title.startIndex..., in: title)),
+          let range = Range(match.range(at: 1), in: title) else {
+        return nil
+    }
+    return Int(title[range])
 }

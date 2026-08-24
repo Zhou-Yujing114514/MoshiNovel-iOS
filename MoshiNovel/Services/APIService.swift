@@ -124,7 +124,11 @@ class APIService {
     }
     
     // MARK: - 任务
-    func fetchTasks() async throws -> TaskListResponse {
+    func fetchTasks(bookId: String? = nil) async throws -> TaskListResponse {
+        if let bookId = bookId, !bookId.isEmpty {
+            let encoded = bookId.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? bookId
+            return try await request("/api/tasks?book_id=\(encoded)")
+        }
         return try await request("/api/tasks")
     }
     
@@ -132,15 +136,15 @@ class APIService {
         return try await request("/api/tasks", method: "POST", body: ["book_id": bookId, "format": format])
     }
     
-    // 查找可复用的 epub 任务（同一本书同一格式）
+    // 查找可复用的 epub 任务（同一本书同一格式），直接按 book_id 查，不受50条限制
     func findReusableTask(bookId: String) async throws -> Int? {
-        let tasks = try await fetchTasks()
+        let tasks = try await fetchTasks(bookId: bookId)
         // 优先复用已完成的 epub 任务（有完整章节索引）
-        if let done = tasks.items?.first(where: { $0.bookId == bookId && $0.format?.lowercased() == "epub" && $0.state == .done }) {
+        if let done = tasks.items?.first(where: { $0.format?.lowercased() == "epub" && $0.state == .done }) {
             return done.id
         }
         // 其次复用进行中的 epub 任务
-        if let active = tasks.items?.first(where: { $0.bookId == bookId && $0.format?.lowercased() == "epub" && ($0.state == .queued || $0.state == .running) }) {
+        if let active = tasks.items?.first(where: { $0.format?.lowercased() == "epub" && ($0.state == .queued || $0.state == .running) }) {
             return active.id
         }
         return nil

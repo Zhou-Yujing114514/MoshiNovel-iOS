@@ -300,17 +300,10 @@ struct ReaderView: View {
             }
             
             // 加载章节列表
-            var loadedChapters = try await APIService.shared.fetchChapters(taskId: taskId)
+            let loadedChapters = try await APIService.shared.fetchChapters(taskId: taskId)
             
-            // 检查章节顺序：如果第一章标题包含很大的数字，说明是倒序的，需要反转
-            if let firstTitle = loadedChapters.first?.title {
-                if let chapterNum = extractChapterNumber(from: firstTitle), chapterNum > 100 {
-                    loadedChapters.reverse()
-                    print("章节列表检测为倒序，已反转。第一章: \(firstTitle) -> 数字: \(chapterNum)")
-                }
-            }
-            
-            chapters = loadedChapters
+            // 按章节数字排序（服务器返回的顺序可能混乱）
+            chapters = sortChapters(loadedChapters)
             
             if chapters.isEmpty {
                 errorMessage = "暂无章节"
@@ -358,15 +351,11 @@ struct ReaderView: View {
                         bookMeta = meta
                     }
                     // 重新加载章节列表（可能有新章节缓存完成）
-                    var newChapters = try await APIService.shared.fetchChapters(taskId: taskId)
-                    // 同样检查章节顺序
-                    if let firstTitle = newChapters.first?.title,
-                       let chapterNum = extractChapterNumber(from: firstTitle), chapterNum > 100 {
-                        newChapters.reverse()
-                    }
+                    let newChapters = try await APIService.shared.fetchChapters(taskId: taskId)
+                    let sortedChapters = sortChapters(newChapters)
                     await MainActor.run {
-                        if newChapters.count > chapters.count {
-                            chapters = newChapters
+                        if sortedChapters.count > chapters.count {
+                            chapters = sortedChapters
                         }
                     }
                 } catch {
@@ -388,6 +377,18 @@ func findTabBar(in view: UIView) -> UITabBar? {
         }
     }
     return nil
+}
+
+// 按章节数字排序，提取不到数字的保持原顺序排在后面
+func sortChapters(_ chapters: [Chapter]) -> [Chapter] {
+    return chapters.enumerated().sorted { a, b in
+        let numA = extractChapterNumber(from: a.element.title) ?? Int.max
+        let numB = extractChapterNumber(from: b.element.title) ?? Int.max
+        if numA == numB {
+            return a.offset < b.offset
+        }
+        return numA < numB
+    }.map { $0.element }
 }
 
 // 从章节标题中提取数字，例如 "第1684章 xxx" -> 1684

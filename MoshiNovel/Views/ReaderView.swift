@@ -86,6 +86,7 @@ struct ReaderView: View {
     @State private var showToc = false
     @State private var fontSize: CGFloat = 17
     @State private var pollingTimer: Timer?
+    @State private var initTask: Task<Void, Never>?
     @State private var showUI = true
     
     var body: some View {
@@ -167,9 +168,12 @@ struct ReaderView: View {
                let window = windowScene.windows.first {
                 findTabBar(in: window)?.isHidden = true
             }
-            Task { await initReader() }
+            initTask = Task { await initReader() }
         }
         .onDisappear {
+            // 取消初始化任务，避免退出后还在后台轮询
+            initTask?.cancel()
+            initTask = nil
             // 如果是本次预览新建的任务，退出时取消，避免残留堆积
             if isNewTask {
                 Task { await APIService.shared.cancelTask(taskId: taskId) }
@@ -319,10 +323,15 @@ struct ReaderView: View {
                     queueMessage = ""
                     break
                 } catch {
-                    // 任务还在排队，继续轮询
-                    queueMessage = "任务排队中，请稍候...（\(attempt + 1)/40）"
-                    try await Task.sleep(nanoseconds: 3_000_000_000)
-                    continue
+                    // 只有404（任务排队中）才重试，其他错误（网络错误/500）直接报错
+                    if case APIError.httpStatus(404, _) = error {
+                        queueMessage = "任务排队中，请稍候...（\(attempt + 1)/40）"
+                        try await Task.sleep(nanoseconds: 3_000_000_000)
+                        continue
+                    }
+                    errorMessage = "加载失败: \(error.localizedDescription)"
+                    isLoading = false
+                    return
                 }
             }
             

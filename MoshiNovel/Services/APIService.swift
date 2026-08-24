@@ -48,9 +48,9 @@ class APIService {
         if !(200...299).contains(httpResponse.statusCode) {
             if let errorResp = try? JSONDecoder().decode(BasicResponse.self, from: data),
                let errorMsg = errorResp.error, !errorMsg.isEmpty {
-                throw APIError.serverError(errorMsg)
+                throw APIError.httpStatus(httpResponse.statusCode, errorMsg)
             }
-            throw APIError.serverError("服务器错误 (\(httpResponse.statusCode))")
+            throw APIError.httpStatus(httpResponse.statusCode, "服务器错误 (\(httpResponse.statusCode))")
         }
         
         let decoder = JSONDecoder()
@@ -210,6 +210,7 @@ enum APIError: LocalizedError {
     case unauthorized
     case decodeError(Error)
     case serverError(String)
+    case httpStatus(Int, String)  // 带状态码的错误，用于区分404/500等
     
     var errorDescription: String? {
         switch self {
@@ -218,6 +219,7 @@ enum APIError: LocalizedError {
         case .unauthorized: return "未登录或登录已过期"
         case .decodeError(let e): return "数据解析失败: \(e.localizedDescription)"
         case .serverError(let msg): return msg
+        case .httpStatus(_, let msg): return msg
         }
     }
 }

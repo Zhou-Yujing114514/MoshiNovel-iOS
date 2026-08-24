@@ -61,12 +61,20 @@ struct HTMLView: UIViewRepresentable {
 }
 
 // 在线阅读视图
+// 排序后的章节，保留原始索引用于加载内容
+struct SortedChapter: Identifiable {
+    let chapter: Chapter
+    let originalIndex: Int
+    var id: String { chapter.id }
+    var title: String { chapter.title }
+}
+
 struct ReaderView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.presentationMode) private var presentationMode
     let taskId: Int
     @State private var bookMeta: BookMeta?
-    @State private var chapters: [Chapter] = []
+    @State private var chapters: [SortedChapter] = []
     @State private var currentIndex = 0
     @State private var chapterContent = ""
     @State private var isLoading = true
@@ -331,7 +339,9 @@ struct ReaderView: View {
         errorMessage = ""
         
         do {
-            let html = try await APIService.shared.fetchChapterContent(taskId: taskId, index: index)
+            // 用原始索引加载内容，因为排序只改了显示顺序，服务器内容索引不变
+            let originalIndex = chapters[index].originalIndex
+            let html = try await APIService.shared.fetchChapterContent(taskId: taskId, index: originalIndex)
             chapterContent = html
             isLoading = false
         } catch {
@@ -379,8 +389,8 @@ func findTabBar(in view: UIView) -> UITabBar? {
     return nil
 }
 
-// 按章节数字排序，提取不到数字的保持原顺序排在后面
-func sortChapters(_ chapters: [Chapter]) -> [Chapter] {
+// 按章节数字排序，保留原始索引用于加载内容
+func sortChapters(_ chapters: [Chapter]) -> [SortedChapter] {
     return chapters.enumerated().sorted { a, b in
         let numA = extractChapterNumber(from: a.element.title) ?? Int.max
         let numB = extractChapterNumber(from: b.element.title) ?? Int.max
@@ -388,7 +398,7 @@ func sortChapters(_ chapters: [Chapter]) -> [Chapter] {
             return a.offset < b.offset
         }
         return numA < numB
-    }.map { $0.element }
+    }.map { SortedChapter(chapter: $0.element, originalIndex: $0.offset) }
 }
 
 // 从章节标题中提取数字，支持阿拉伯数字和中文数字，例如 "第1684章" -> 1684, "第二章" -> 2

@@ -132,6 +132,25 @@ class APIService {
         return try await request("/api/tasks", method: "POST", body: ["book_id": bookId, "format": format])
     }
     
+    // 查找可复用的 epub 任务（同一本书同一格式）
+    func findReusableTask(bookId: String) async throws -> Int? {
+        let tasks = try await fetchTasks()
+        // 优先复用已完成的 epub 任务（有完整章节索引）
+        if let done = tasks.items?.first(where: { $0.bookId == bookId && $0.format?.lowercased() == "epub" && $0.state == .done }) {
+            return done.id
+        }
+        // 其次复用进行中的 epub 任务
+        if let active = tasks.items?.first(where: { $0.bookId == bookId && $0.format?.lowercased() == "epub" && ($0.state == .queued || $0.state == .running) }) {
+            return active.id
+        }
+        return nil
+    }
+    
+    // 取消任务
+    func cancelTask(taskId: Int) async {
+        _ = try? await request("/api/tasks/\(taskId)", method: "DELETE") as BasicResponse
+    }
+    
     // MARK: - 在线阅读
     func fetchBookMeta(taskId: Int) async throws -> BookMeta {
         return try await request("/api/book/\(taskId)/meta")

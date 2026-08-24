@@ -10,6 +10,7 @@ struct SearchView: View {
     @State private var selectedBook: SearchResult?
     @State private var showReaderLink = false
     @State private var readerTaskId = 0
+    @State private var readerIsNewTask = false
     @State private var isCreatingPreview = false
     @State private var searchTask: Task<Void, Never>?
     
@@ -35,7 +36,7 @@ struct SearchView: View {
             .background(appState.bgColor)
             .navigationBarHidden(true)
             .background(
-                NavigationLink(destination: ReaderView(taskId: readerTaskId).environmentObject(appState), isActive: $showReaderLink) {
+                NavigationLink(destination: ReaderView(taskId: readerTaskId, isNewTask: readerIsNewTask).environmentObject(appState), isActive: $showReaderLink) {
                     EmptyView()
                 }
                 .hidden()
@@ -319,11 +320,20 @@ struct SearchView: View {
         defer { isCreatingPreview = false }
         
         do {
-            let response = try await APIService.shared.submitTask(bookId: book.id, format: "epub")
-            if let taskId = response.id {
+            var isNewTask = false
+            // 先查找可复用的 epub 任务
+            if let existingId = try await APIService.shared.findReusableTask(bookId: book.id) {
+                readerTaskId = existingId
+                isNewTask = false
+            } else {
+                // 找不到才新建
+                let response = try await APIService.shared.submitTask(bookId: book.id, format: "epub")
+                guard let taskId = response.id else { throw APIError.invalidResponse }
                 readerTaskId = taskId
-                showReaderLink = true
+                isNewTask = true
             }
+            readerIsNewTask = isNewTask
+            showReaderLink = true
         } catch {
             print("创建预览任务失败: \(error)")
             searchError = "创建预览失败: \(error.localizedDescription)"

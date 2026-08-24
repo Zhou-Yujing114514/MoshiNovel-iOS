@@ -20,11 +20,13 @@ struct HTMLView: UIViewRepresentable {
         let textColor = isDayMode ? "#1f2430" : "#e6e9f0"
         let linkColor = "#4f8cff"
         
-        // 提取 body 内容，避免整页 HTML 冲突
-        let bodyMatch = html.range(of: "<body[^>]*>([\\s\\S]*)</body>", options: .regularExpression)
+        // 提取 body 内容（只取 body 内部，不含 body 标签）
         let content: String
-        if let match = bodyMatch {
-            content = String(html[match])
+        if let regex = try? NSRegularExpression(pattern: "<body[^>]*>([\\s\\S]*)</body>", options: []),
+           let match = regex.firstMatch(in: html, range: NSRange(html.startIndex..., in: html)),
+           match.numberOfRanges > 1,
+           let contentRange = Range(match.range(at: 1), in: html) {
+            content = String(html[contentRange])
         } else {
             content = html
         }
@@ -56,7 +58,7 @@ struct HTMLView: UIViewRepresentable {
         </html>
         """
         
-        webView.loadHTMLString(wrappedHTML, baseURL: nil)
+        webView.loadHTMLString(wrappedHTML, baseURL: URL(string: "https://morax.kdns.fr"))
     }
 }
 
@@ -73,12 +75,14 @@ struct ReaderView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.presentationMode) private var presentationMode
     let taskId: Int
+    let isNewTask: Bool
     @State private var bookMeta: BookMeta?
     @State private var chapters: [SortedChapter] = []
     @State private var currentIndex = 0
     @State private var chapterContent = ""
     @State private var isLoading = true
     @State private var errorMessage = ""
+    @State private var queueMessage = ""
     @State private var showToc = false
     @State private var fontSize: CGFloat = 17
     @State private var pollingTimer: Timer?
@@ -111,8 +115,19 @@ struct ReaderView: View {
                 // 内容区
                 if isLoading {
                     Spacer()
-                    ProgressView("加载中...")
-                        .foregroundColor(appState.textColor)
+                    VStack(spacing: 12) {
+                        ProgressView()
+                        if !queueMessage.isEmpty {
+                            Text(queueMessage)
+                                .font(.vt(size: 13))
+                                .foregroundColor(appState.mutedColor)
+                                .multilineTextAlignment(.center)
+                        } else {
+                            Text("加载中...")
+                                .font(.vt(size: 14))
+                                .foregroundColor(appState.textColor)
+                        }
+                    }
                     Spacer()
                 } else if !errorMessage.isEmpty {
                     Spacer()
@@ -155,6 +170,10 @@ struct ReaderView: View {
             Task { await initReader() }
         }
         .onDisappear {
+            // 如果是本次预览新建的任务，退出时取消，避免残留堆积
+            if isNewTask {
+                Task { await APIService.shared.cancelTask(taskId: taskId) }
+            }
             // 恢复底部 TabBar
             if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                let window = windowScene.windows.first {
@@ -192,6 +211,9 @@ struct ReaderView: View {
             
             Button(action: {
                 fontSize = fontSize >= 22 ? 14 : fontSize + 2
+                // 保存字号
+                let key = "reader_progress_\(taskId)"
+                UserDefaults.standard.set(["chapter": currentIndex, "fontSize": fontSize], forKey: key)
             }) {
                 Text("A")
                     .font(.vt(size: 16))
@@ -286,17 +308,20 @@ struct ReaderView: View {
     private func initReader() async {
         isLoading = true
         errorMessage = ""
+        queueMessage = ""
         
         do {
-            // 轮询 meta，直到任务开始下载
+            // 轮询 meta，直到任务开始下载（最多等 2 分钟）
             for attempt in 0..<40 {
                 do {
                     let meta = try await APIService.shared.fetchBookMeta(taskId: taskId)
                     bookMeta = meta
+                    queueMessage = ""
                     break
                 } catch {
-                    // 404 表示任务还在排队，继续轮询
-                    try? await Task.sleep(nanoseconds: 3_000_000_000)
+                    // 任务还在排队，继续轮询
+                    queueMessage = "任务排队中，请稍候...（\(attempt + 1)/40）"
+                    try await Task.sleep(nanoseconds: 3_000_000_000)
                     continue
                 }
             }
@@ -319,8 +344,16 @@ struct ReaderView: View {
                 return
             }
             
-            // 加载第一章
-            await loadChapter(0)
+            // 恢复阅读进度和字号
+            let key = "reader_progress_\(taskId)"
+            if let saved = UserDefaults.standard.dictionary(forKey: key) as? [String: Any] {
+                let savedIndex = saved["chapter"] as? Int ?? 0
+                currentIndex = min(savedIndex, chapters.count - 1)
+                fontSize = saved["fontSize"] as? CGFloat ?? 17
+            }
+            
+            // 加载上次阅读的章节（或第一章）
+            await loadChapter(currentIndex)
             
             // 开始轮询进度
             startProgressPolling()
@@ -344,6 +377,10 @@ struct ReaderView: View {
             let html = try await APIService.shared.fetchChapterContent(taskId: taskId, index: originalIndex)
             chapterContent = html
             isLoading = false
+            
+            // 保存阅读进度
+            let key = "reader_progress_\(taskId)"
+            UserDefaults.standard.set(["chapter": index, "fontSize": fontSize], forKey: key)
         } catch {
             errorMessage = "本章尚未下载完成，请等待下载继续后重试"
             isLoading = false

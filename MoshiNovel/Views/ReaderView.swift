@@ -391,13 +391,52 @@ func sortChapters(_ chapters: [Chapter]) -> [Chapter] {
     }.map { $0.element }
 }
 
-// 从章节标题中提取数字，例如 "第1684章 xxx" -> 1684
+// 从章节标题中提取数字，支持阿拉伯数字和中文数字，例如 "第1684章" -> 1684, "第二章" -> 2
 func extractChapterNumber(from title: String) -> Int? {
+    // 先尝试阿拉伯数字
     let pattern = "第(\\d+)章"
-    guard let regex = try? NSRegularExpression(pattern: pattern, options: []),
-          let match = regex.firstMatch(in: title, range: NSRange(title.startIndex..., in: title)),
-          let range = Range(match.range(at: 1), in: title) else {
-        return nil
+    if let regex = try? NSRegularExpression(pattern: pattern, options: []),
+       let match = regex.firstMatch(in: title, range: NSRange(title.startIndex..., in: title)),
+       let range = Range(match.range(at: 1), in: title),
+       let num = Int(title[range]) {
+        return num
     }
-    return Int(title[range])
+    
+    // 再尝试中文数字
+    let cnPattern = "第([一二三四五六七八九十百千万零两]+)章"
+    if let regex = try? NSRegularExpression(pattern: cnPattern, options: []),
+       let match = regex.firstMatch(in: title, range: NSRange(title.startIndex..., in: title)),
+       let range = Range(match.range(at: 1), in: title) {
+        let cnNum = String(title[range])
+        return chineseNumberToInt(cnNum)
+    }
+    
+    return nil
+}
+
+// 中文数字转阿拉伯数字（支持简单格式）
+func chineseNumberToInt(_ cn: String) -> Int? {
+    let digitMap: [Character: Int] = [
+        "零": 0, "一": 1, "二": 2, "两": 2, "三": 3, "四": 4,
+        "五": 5, "六": 6, "七": 7, "八": 8, "九": 9
+    ]
+    let unitMap: [Character: Int] = ["十": 10, "百": 100, "千": 1000, "万": 10000]
+    
+    var result = 0
+    var current = 0
+    
+    for char in cn {
+        if let digit = digitMap[char] {
+            current = digit
+        } else if let unit = unitMap[char] {
+            if current == 0 {
+                current = 1
+            }
+            result += current * unit
+            current = 0
+        }
+    }
+    result += current
+    
+    return result > 0 ? result : nil
 }

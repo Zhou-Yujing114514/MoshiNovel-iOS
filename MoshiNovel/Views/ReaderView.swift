@@ -437,6 +437,16 @@ func findTabBar(in view: UIView) -> UITabBar? {
 
 // 按章节数字排序，保留原始索引用于加载内容
 func sortChapters(_ chapters: [Chapter]) -> [SortedChapter] {
+    // 检查是否有番外篇（没有章节号的章节）
+    let hasExtra = chapters.contains { extractChapterNumber(from: $0.title) == nil }
+    
+    // 如果有番外篇，说明服务器返回的顺序本身是正确的（番外篇穿插在正文中）
+    // 直接用原始顺序，不排序，避免番外篇被排到最后
+    if hasExtra {
+        return chapters.enumerated().map { SortedChapter(chapter: $0.element, originalIndex: $0.offset) }
+    }
+    
+    // 没有番外篇，按章节号排序
     return chapters.enumerated().sorted { a, b in
         let numA = extractChapterNumber(from: a.element.title) ?? Int.max
         let numB = extractChapterNumber(from: b.element.title) ?? Int.max

@@ -27,7 +27,7 @@ class APIService {
         
         if let body = body {
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
-            print("[API] 请求体: \(String(data: request.httpBody!, encoding: .utf8) ?? "")")
+            // 注意：不打印请求体，避免密码/token 等敏感信息进入日志
         }
         
         let (data, response) = try await session.data(for: request)
@@ -38,7 +38,6 @@ class APIService {
         }
         
         print("[API] 响应状态码: \(httpResponse.statusCode)")
-        print("[API] 响应数据: \(String(data: data, encoding: .utf8) ?? "(空)")")
         
         if httpResponse.statusCode == 401 {
             throw APIError.unauthorized

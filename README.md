@@ -46,3 +46,12 @@ MoshiNovel/
 
 - 网页版：https://morax.kdns.fr
 - 虚空终端 iOS：https://github.com/Zhou-Yujing114514/VoidTerminal-iOS
+
+## 更新日志
+
+### v1.1.0
+- 服务端书源扩充，可检索 / 可下载的书籍来源进一步增多
+- 杂源搜索优化，提升杂源结果的相关性与响应稳定性
+- 修复在线阅读章节接口，解决章节内容偶发解析失败
+- Release 构建不再打印请求/响应日志，避免账号密码等敏感信息写入系统日志
+

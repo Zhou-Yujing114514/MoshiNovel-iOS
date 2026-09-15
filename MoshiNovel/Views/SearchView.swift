@@ -307,7 +307,9 @@ struct SearchView: View {
             }
         } catch {
             if Task.isCancelled { return }
+            #if DEBUG
             print("搜索失败: \(error)")
+            #endif
             await MainActor.run {
                 self.searchError = error.localizedDescription
                 self.searchResults = []
@@ -335,7 +337,9 @@ struct SearchView: View {
             readerIsNewTask = isNewTask
             showReaderLink = true
         } catch {
+            #if DEBUG
             print("创建预览任务失败: \(error)")
+            #endif
             searchError = "创建预览失败: \(error.localizedDescription)"
         }
     }

@@ -15,11 +15,15 @@ class APIService {
     private func request<T: Codable>(_ path: String, method: String = "GET", body: [String: Any]? = nil) async throws -> T {
         let urlString = "\(baseURL)\(path)"
         guard let url = URL(string: urlString) else {
+            #if DEBUG
             print("[API] 无效URL: \(urlString)")
+            #endif
             throw APIError.invalidURL
         }
         
+        #if DEBUG
         print("[API] 请求: \(method) \(urlString)")
+        #endif
         
         var request = URLRequest(url: url)
         request.httpMethod = method
@@ -33,11 +37,15 @@ class APIService {
         let (data, response) = try await session.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse else {
+            #if DEBUG
             print("[API] 无效响应")
+            #endif
             throw APIError.invalidResponse
         }
         
+        #if DEBUG
         print("[API] 响应状态码: \(httpResponse.statusCode)")
+        #endif
         
         if httpResponse.statusCode == 401 {
             throw APIError.unauthorized
@@ -57,11 +65,17 @@ class APIService {
         
         do {
             let result = try decoder.decode(T.self, from: data)
+            #if DEBUG
             print("[API] 解码成功")
+            #endif
             return result
         } catch {
+            #if DEBUG
             print("[API] 解码失败: \(error)")
+            #endif
+            #if DEBUG
             print("[API] 原始数据: \(String(data: data, encoding: .utf8) ?? "")")
+            #endif
             throw APIError.decodeError(error)
         }
     }

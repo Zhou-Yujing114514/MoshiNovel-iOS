@@ -668,7 +668,9 @@ struct AdminView: View {
             let info = try await APIService.shared.fetchAdminInfo()
             await MainActor.run { adminInfo = info }
         } catch {
+            #if DEBUG
             print("加载网站信息失败: \(error)")
+            #endif
         }
     }
     
@@ -792,7 +794,9 @@ struct AdminView: View {
             await MainActor.run { adminInfo = nil }
             await loadInfo()
         } catch {
+            #if DEBUG
             print("清空记录失败: \(error)")
+            #endif
         }
     }
 }

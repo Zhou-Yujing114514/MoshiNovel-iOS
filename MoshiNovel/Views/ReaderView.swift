@@ -8,7 +8,18 @@ struct HTMLView: UIViewRepresentable {
     let fontSize: CGFloat
     
     func makeUIView(context: Context) -> WKWebView {
-        let webView = WKWebView()
+        // Disable JavaScript: novel reading only needs static HTML/CSS rendering.
+        // This neutralizes any <script>, inline event handlers, or javascript: URLs
+        // that may be present in the server-provided chapter HTML.
+        let config = WKWebViewConfiguration()
+        let prefs = WKPreferences()
+        prefs.javaScriptEnabled = false
+        prefs.javaScriptCanOpenWindowsAutomatically = false
+        config.preferences = prefs
+        if #available(iOS 14.0, *) {
+            config.defaultWebpagePreferences.allowsContentJavaScript = false
+        }
+        let webView = WKWebView(frame: .zero, configuration: config)
         webView.isOpaque = false
         webView.backgroundColor = .clear
         webView.scrollView.backgroundColor = .clear

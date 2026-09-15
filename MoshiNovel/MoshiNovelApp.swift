@@ -72,7 +72,9 @@ struct ContentView: View {
             let config = try await APIService.shared.fetchSiteConfig()
             appState.siteConfig = config
         } catch {
+            #if DEBUG
             print("加载站点配置失败: \(error)")
+            #endif
         }
     }
     
@@ -82,7 +84,9 @@ struct ContentView: View {
                 appState.setUser(user)
             }
         } catch {
+            #if DEBUG
             print("检查登录状态失败: \(error)")
+            #endif
         }
     }
     

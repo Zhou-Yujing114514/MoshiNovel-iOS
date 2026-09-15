@@ -270,7 +270,9 @@ struct DownloadView: View {
                 allTasks = allItems.filter { $0.state != .done }
             }
         } catch {
+            #if DEBUG
             print("加载任务失败: \(error)")
+            #endif
         }
     }
     
@@ -284,7 +286,9 @@ struct DownloadView: View {
         }
         
         guard let url = URL(string: fullUrl) else {
+            #if DEBUG
             print("无效的下载链接: \(fullUrl)")
+            #endif
             return
         }
         
@@ -309,13 +313,17 @@ struct DownloadView: View {
                 self.downloadManager = nil
                 
                 if let error = error {
+                    #if DEBUG
                     print("下载失败: \(error)")
+                    #endif
                     return
                 }
                 
                 guard let fileURL = fileURL else { return }
                 
+                #if DEBUG
                 print("下载完成: \(fileURL.path)")
+                #endif
                 
                 // 弹出分享/保存面板
                 let activityVC = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)

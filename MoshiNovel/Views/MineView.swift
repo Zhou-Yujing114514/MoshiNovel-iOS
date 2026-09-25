@@ -94,7 +94,7 @@ struct MineView: View {
                 showAbout = true
             }
 
-            menuButton(title: "检查更新", icon: "arrow.triangle.2.circlepath", color: .vtAccent) {
+            menuButton(title: "检查更新", icon: "arrow.clockwise", color: .vtAccent) {
                 if let vc = UIApplication.shared.connectedScenes
                     .filter({ $0.activationState == .foregroundActive })
                     .compactMap({ $0 as? UIWindowScene })

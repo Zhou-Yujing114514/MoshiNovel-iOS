@@ -127,20 +127,32 @@ class APIService {
     
     func logout() async {
         _ = try? await request("/api/logout", method: "POST", body: [:]) as BasicResponse
+        // 清理本地 Cookie，防止被自动登回
+        if let cookies = HTTPCookieStorage.shared.cookies {
+            for cookie in cookies {
+                HTTPCookieStorage.shared.deleteCookie(cookie)
+            }
+        }
     }
     
     // MARK: - 搜索
     func searchBooks(_ query: String) async throws -> [SearchResult] {
-        let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
-        let response: SearchResponse = try await request("/api/search?q=\(encoded)")
+        var comps = URLComponents()
+        comps.path = "/api/search"
+        comps.queryItems = [URLQueryItem(name: "q", value: query)]
+        let path = comps.url?.relativeString ?? "/api/search"
+        let response: SearchResponse = try await request(path)
         return response.items ?? []
     }
     
     // MARK: - 任务
     func fetchTasks(bookId: String? = nil) async throws -> TaskListResponse {
         if let bookId = bookId, !bookId.isEmpty {
-            let encoded = bookId.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? bookId
-            return try await request("/api/tasks?book_id=\(encoded)")
+            var comps = URLComponents()
+            comps.path = "/api/tasks"
+            comps.queryItems = [URLQueryItem(name: "book_id", value: bookId)]
+            let path = comps.url?.relativeString ?? "/api/tasks"
+            return try await request(path)
         }
         return try await request("/api/tasks")
     }

@@ -93,7 +93,18 @@ struct MineView: View {
             menuButton(title: "关于本站", icon: "info.circle.fill", color: .vtAccent) {
                 showAbout = true
             }
-            
+
+            menuButton(title: "检查更新", icon: "arrow.triangle.2.circlepath", color: .vtAccent) {
+                if let vc = UIApplication.shared.connectedScenes
+                    .filter({ $0.activationState == .foregroundActive })
+                    .compactMap({ $0 as? UIWindowScene })
+                    .first?.windows
+                    .first(where: { $0.isKeyWindow })?
+                    .rootViewController {
+                    AppUpdateChecker.shared.checkAndPrompt(from: vc)
+                }
+            }
+
             menuButton(title: "反馈问题", icon: "exclamationmark.bubble.fill", color: .vtGreen) {
                 showFeedback = true
             }

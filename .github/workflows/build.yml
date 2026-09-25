@@ -27,11 +27,11 @@ jobs:
           CODE_SIGNING_REQUIRED=NO \
           CODE_SIGNING_ALLOWED=NO \
           build
-        
-        # 创建 IPA
+
+        # 创建 IPA（用 Python zipfile 确保自签兼容性）
         mkdir -p Payload
         cp -r build/Build/Products/Release-iphoneos/MoshiNovel.app Payload/
-        zip -r MoshiNovel.ipa Payload
+        python3 scripts/package_ipa.py
         rm -rf Payload
     
     - name: Upload IPA

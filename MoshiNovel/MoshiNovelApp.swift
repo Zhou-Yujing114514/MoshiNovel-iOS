@@ -64,6 +64,8 @@ struct ContentView: View {
         .task {
             await loadSiteConfig()
             await checkLogin()
+            // 静默检查更新（每天一次）
+            AppUpdateChecker.shared.checkSilently { _ in }
         }
     }
     
